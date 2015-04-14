@@ -1,0 +1,32 @@
+/*
+ * Copyright (c) 2015 Matthieu
+ * All rights reserved.
+ */
+package intel_8088;
+
+task InstructionQueue {
+
+	u8 queue[4];
+	u3 count;
+
+	in sync u8 instr_in;
+
+	out sync ready u8 instr;
+	out bool empty;
+
+	void loop() {
+		if (true && count > 0) {
+			instr.write(queue[0]);
+			for (u3 i = 0; i < 3; i++) {
+				queue[i] = queue[i + 1];
+			}
+			
+			count--;
+			empty.write(count == 0);
+		}
+
+		if (count < 4) {
+			queue[count - 1] = instr_in.read();
+		}
+	}
+}

@@ -1,0 +1,25 @@
+/*
+ * Copyright (c) 2015 Matthieu
+ * All rights reserved.
+ */
+package intel_8088;
+
+network CPU {
+	import intel_8088.ExecutionUnit;
+	import intel_8088.BusInterfaceUnit;
+
+	in u8 addrLow_in;
+
+	out sync u8 addrLow_out;
+	out u12 addrHigh;
+
+	out bool rd, wr;
+	
+	biu = new BusInterfaceUnit();
+	biu.reads(addrLow_in);
+	biu.writes(addrLow_out, addrHigh, rd, wr);
+
+	eu = new ExecutionUnit();
+	eu.reads(biu.instr);
+
+}

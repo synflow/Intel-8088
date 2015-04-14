@@ -1,0 +1,35 @@
+/*
+ * Copyright (c) 2015 Matthieu
+ * All rights reserved.
+ */
+package intel_8088;
+
+task BusController {
+
+	out sync u8 addrLow_out;
+	out u12 addrHigh;
+
+	out bool rd, wr;
+
+	out sync u8 instr;
+	
+	in u8 bus_data;
+
+	void loop() {
+		if (true) { // instruction requested
+			addrLow_out.write(3);
+			addrHigh.write(18);
+			
+			fence;
+			
+			rd.write(0);
+			
+			fence;
+			
+			// read data in
+			print("read data");
+			instr.write(bus_data.read());
+		}
+	}
+
+}

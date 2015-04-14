@@ -1,0 +1,28 @@
+/*
+ * Copyright (c) 2015 Matthieu
+ * All rights reserved.
+ */
+package intel_8088;
+
+network BusInterfaceUnit {
+	import intel_8088.BusController;
+	import intel_8088.InstructionQueue;
+
+	out sync u8 addrLow_out;
+	out u12 addrHigh;
+
+	out bool rd, wr;
+
+	out sync ready u8 instr;
+	
+	in u8 bus_data;
+
+	ctrl = new BusController();
+	ctrl.reads(bus_data);
+	ctrl.writes(addrLow_out, addrHigh, rd, wr);
+
+	queue = new InstructionQueue();
+	queue.reads(ctrl.instr);
+	queue.writes(instr);
+
+}

@@ -1,0 +1,8 @@
+Intel 8086 Family User's Manual
+
+reset: page 44
+queue status: page 44
+status lines: page 45
+
+Chapter 4 Hardware Reference Information
+page 143

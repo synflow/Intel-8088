@@ -1,0 +1,52 @@
+/*
+ * Copyright (c) 2015 Matthieu
+ * All rights reserved.
+ */
+package intel_8088;
+
+task ExecutionUnit {
+
+	in sync ready u8 instr;
+	
+	out sync u2 qs;
+
+	const u2 /*NORMAL = 0,*/ FIRST_BYTE = 1, NEXT_BYTE = 3, EMPTIED = 2;
+
+	/*
+	 * REG    W=0  W=1
+	 * ---    ---  ---
+	 * 000    AL   AX
+	 * 001    CL   CX
+	 * 010    DL   DX
+	 * 011    BL   BX
+	 * 100    AH   SP
+	 * 101    CH   BP
+	 * 110    DH   SI
+	 * 111    BH   DI
+	 */
+
+	void loop() {
+		u8 instr = instr.read(); // always request instructions
+		qs.write(FIRST_BYTE);
+		if (instr >> 2 == 0) {
+			// ADD REG/MEM, REG/MEM
+		} else if (instr == 0b0000_0100) {
+			// ADD AL, IMMED8
+			/*u8 data =*/ instr.read();
+			qs.write(NEXT_BYTE);
+		} else if (instr == 0b0000_0101) {
+			// ADD AX, IMMED16
+			/*u8 data_lo =*/ instr.read();
+			qs.write(NEXT_BYTE);
+			/*u8 data_hi =*/ instr.read();
+			qs.write(NEXT_BYTE);
+		} else if (instr >> 4 == 7) {
+			// Jxx instructions
+			idle(70);
+			
+			// when jump has been computed output
+			qs.write(EMPTIED);
+		}
+	}
+
+}
