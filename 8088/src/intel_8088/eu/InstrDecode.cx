@@ -12,6 +12,7 @@ task InstrDecode {
 	in sync u16 result;
 	
 	out u3 reg1_addr, reg2_addr, sync u16 reg_data;
+	out bool write_reg;
 	out u16 alu_oper1, alu_oper2, opcode_t opcode;
 
 	out sync u16 bus_addr, sync bus_data;
@@ -37,9 +38,8 @@ task InstrDecode {
 				fence;
 				alu_oper1.write(reg1_value.read());
 				alu_oper2.write(reg2_value.read());
-				fence;
 				reg1_addr.write(reg);
-				reg_data.write(result.read());
+				write_reg.write(true);
 			}
 		} else if (instr_b0 >> 3 == 0b01010) { // push
 			u3 reg = (instr_b0 >> 3) & 7;

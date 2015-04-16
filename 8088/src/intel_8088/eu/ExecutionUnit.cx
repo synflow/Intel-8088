@@ -12,11 +12,20 @@ network ExecutionUnit {
 	out sync u16 addr;
 	out sync u16 data_out;
 
-	regs = new RegisterFile();
-	regs.reads(decode.reg1_addr, decode.reg2_addr, decode.reg_data);
-
 	decode = new InstrDecode();
 	decode.reads(instr, data_in, regs.value_a, regs.value_b, alu.result);
+	
+	update_reg = new task {
+		properties {type: "combinational"}
+		void loop() {
+			if (decode.write_reg.read()) {
+				regs.data.write(alu.result.read());
+			}
+		}
+	};
+
+	regs = new RegisterFile();
+	regs.reads(decode.reg1_addr, decode.reg2_addr);
 
 	alu = new ALU();
 	alu.reads(decode.alu_oper1, decode.alu_oper2, decode.opcode);
