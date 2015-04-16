@@ -5,7 +5,7 @@
 package intel_8088;
 
 network CPU {
-	import intel_8088.ExecutionUnit;
+	import intel_8088.eu.ExecutionUnit;
 	import intel_8088.BusInterfaceUnit;
 
 	in u8 addrLow_in;
@@ -16,10 +16,11 @@ network CPU {
 	out bool rd, wr;
 	
 	biu = new BusInterfaceUnit();
-	biu.reads(addrLow_in);
-	biu.writes(addrLow_out, addrHigh, rd, wr);
+	biu.reads(eu.addr, eu.data_out, addrLow_in);
 
 	eu = new ExecutionUnit();
-	eu.reads(biu.instr);
+	eu.reads(biu.instr, biu.eu_data_out);
+
+	this.reads(biu.addrLow_out, biu.addrHigh, biu.rd, biu.wr);
 
 }

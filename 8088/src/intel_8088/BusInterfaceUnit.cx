@@ -8,6 +8,11 @@ network BusInterfaceUnit {
 	import intel_8088.BusController;
 	import intel_8088.InstructionQueue;
 
+	sync {
+		in u16 eu_addr, eu_data;
+	}
+	out sync u16 eu_data_out;
+
 	out sync u8 addrLow_out;
 	out u12 addrHigh;
 
@@ -19,10 +24,9 @@ network BusInterfaceUnit {
 
 	ctrl = new BusController();
 	ctrl.reads(bus_data);
-	ctrl.writes(addrLow_out, addrHigh, rd, wr);
+	ctrl.writes(addrLow_out, addrHigh, rd, wr, queue.instr_in, eu_data_out);
 
 	queue = new InstructionQueue();
-	queue.reads(ctrl.instr);
 	queue.writes(instr);
 
 }

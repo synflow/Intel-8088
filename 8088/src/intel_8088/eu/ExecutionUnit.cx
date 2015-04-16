@@ -1,0 +1,75 @@
+/*
+ * Copyright (c) 2015 Matthieu
+ * All rights reserved.
+ */
+package intel_8088.eu;
+
+network ExecutionUnit {
+	import intel_8088.eu.InstrDecode;
+
+	in sync ready u8 instr, sync u16 data_in;
+	
+	out sync u16 addr;
+	out sync u16 data_out;
+
+	regs = new RegisterFile();
+	regs.reads(decode.reg1_addr, decode.reg2_addr, decode.reg_data);
+
+	decode = new InstrDecode();
+	decode.reads(instr, data_in, regs.value_a, regs.value_b, alu.result);
+
+	alu = new ALU();
+	alu.reads(decode.alu_oper1, decode.alu_oper2, decode.opcode);
+
+	this.reads(decode.bus_addr, decode.bus_data);
+}
+
+task ALU {
+	import intel_8088.eu.Opcodes.*;
+	
+	properties {
+		type: "combinational"
+	}
+
+	in u16 op1, op2, opcode_t opcode;
+	out sync u16 result;
+
+	void loop() {
+		if (opcode.read() == OPCODE_ADD) {
+			u17 sum = op1.read() + op2.read();
+			result.write((u16) sum);
+		} else if (opcode.read() == OPCODE_MOV) {
+			result.write(op1.read());
+		}
+	}
+}
+
+task RegisterFile {
+
+/*
+	 * REG    W=0  W=1
+	 * ---    ---  ---
+	 * 000    AL   AX
+	 * 001    CL   CX
+	 * 010    DL   DX
+	 * 011    BL   BX
+	 * 100    AH   SP
+	 * 101    CH   BP
+	 * 110    DH   SI
+	 * 111    BH   DI
+	 */
+	in u3 num_a, num_b, sync u16 data;
+	out u16 value_a, value_b;
+
+	u16 registers[8];
+	
+	void loop() {
+		u3 addr = num_a.read();
+		value_a.write(registers[addr]);
+		value_b.write(registers[num_b.read()]);
+		if (data.available) {
+			registers[addr] = data.read();
+		}
+	}
+
+}

@@ -1,0 +1,59 @@
+/*
+ * Copyright (c) 2015 Matthieu
+ * All rights reserved.
+ */
+package intel_8088.eu;
+
+task InstrDecode {
+	import intel_8088.eu.Opcodes.*;
+
+	in sync ready u8 instr, sync u16 bus_data_in;
+	in u16 reg1_value, reg2_value;
+	in sync u16 result;
+	
+	out u3 reg1_addr, reg2_addr, sync u16 reg_data;
+	out u16 alu_oper1, alu_oper2, opcode_t opcode;
+
+	out sync u16 bus_addr, sync bus_data;
+
+	out sync u2 qs;
+
+	const u2 /*NORMAL = 0,*/ FIRST_BYTE = 1, NEXT_BYTE = 3, EMPTIED = 2;
+
+	void loop() {
+		u8 instr_b0 = instr.read();
+		qs.write(FIRST_BYTE);
+		if (instr_b0 >> 2 == 0) { // ADD
+			u8 instr_b1 = instr.read();
+			qs.write(NEXT_BYTE);
+			u2 mod = instr_b1 >> 6;
+			u3 reg = (instr_b1 >> 3) & 7;
+			u3 r_m = instr_b1 & 7;
+			opcode.write(OPCODE_ADD);
+
+			if (mod == 0b11) {
+				reg1_addr.write(reg);
+				reg2_addr.write(r_m);
+				fence;
+				alu_oper1.write(reg1_value.read());
+				alu_oper2.write(reg2_value.read());
+				fence;
+				reg1_addr.write(reg);
+				reg_data.write(result.read());
+			}
+		} else if (instr_b0 >> 3 == 0b01010) { // push
+			u3 reg = (instr_b0 >> 3) & 7;
+			reg1_addr.write(REG_SP);
+			// do SP += 2
+			reg1_addr.write(reg);
+			bus_addr.write(50); // value of SP
+			bus_data.write(reg); // value of data to push
+		} else {
+			// Jxx instructions
+			idle(70);
+			
+			// when jump has been computed output
+			qs.write(EMPTIED);
+		}
+	}
+}
