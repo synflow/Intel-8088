@@ -21,9 +21,9 @@ bundle Opcodes {
 	 
 	typedef u3 opcode_t;
 
-	u3	OPCODE_NOP = 0,
-		OPCODE_MOV = 1,
-		OPCODE_ADD = 2;
+	u3	OPCODE_MOV = 0,
+		OPCODE_INC = 1,
+		OPCODE_COMPUTED = 7;
 
 	u3 REG_SP = 100;
 

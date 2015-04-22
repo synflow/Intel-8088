@@ -1,4 +1,5 @@
 /.ir
+/projects
 /sim
 /testbench
 /verilog-gen

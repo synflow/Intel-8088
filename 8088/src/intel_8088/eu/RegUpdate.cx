@@ -1,0 +1,25 @@
+/*
+ * Copyright (c) 2015 Matthieu
+ * All rights reserved.
+ */
+package intel_8088.eu;
+
+task RegUpdate {
+	import intel_8088.eu.Opcodes.*;
+	
+	properties {
+		type: "combinational"
+	}
+	
+	in sync opcode_t opcode, u16 reg_value, u16 computed;
+	out sync u16 new_value;
+	void loop() {
+		if (opcode.read() == OPCODE_MOV) {
+			new_value.write(reg_value.read());
+		} else if (opcode.read() == OPCODE_INC) {
+			new_value.write((u16) (reg_value.read() + 1));
+		} else if (opcode.read() == OPCODE_COMPUTED) {
+			new_value.write(computed.read());
+		}
+	}
+}

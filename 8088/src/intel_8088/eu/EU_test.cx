@@ -1,0 +1,29 @@
+/*
+ * Copyright (c) 2015 Matthieu
+ * All rights reserved.
+ */
+package intel_8088.eu;
+
+network EU_test {
+	import intel_8088.eu.ExecutionUnit;
+
+	eu = new ExecutionUnit();
+	
+	stimulus = new task {
+		void setup() {
+			eu.data_in.write(0);
+
+			eu.instr.write(0x8B);
+			eu.instr.write(0xCB);
+			eu.instr.write(0x8B);
+			eu.instr.write(0xD1);
+		}
+	};
+
+	expected = new task {
+		void setup() {
+			idle(10);
+		}
+	};
+
+}
