@@ -1,0 +1,33 @@
+/*
+ * Copyright (c) 2015 Matthieu
+ * All rights reserved.
+ */
+package intel_8088.eu;
+
+task ComputeEA {
+	import intel_8088.eu.Consts_8086.*;
+	
+	out u3 src1;
+	out sync u16 addr;
+	
+	void loop() {
+		u8 instr_b1 = 0b0000_0000;
+		
+		u2 mod = instr_b1 >> 6;
+		u3 reg = (instr_b1 >> 3) & 7;
+		u3 r_m = instr_b1 & 7;
+		
+		if (mod == 0b00) {
+			if (r_m == 0b000) {
+				src1.write(REG_BX);
+				src1.write(REG_SI);
+			}
+		} else if (mod == 0b01) {
+			
+		} else if (mod == 0b10) {
+			
+		} else {
+			
+		}
+	}
+}

@@ -5,7 +5,7 @@
 package intel_8088.eu;
 
 task InstrDecode {
-	import intel_8088.eu.Opcodes.*;
+	import intel_8088.eu.Consts_8086.*;
 
 	in sync ready u8 instr, sync u16 bus_data_in;
 	in u16 reg1_value, reg2_value;

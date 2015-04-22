@@ -2,11 +2,11 @@
  * Copyright (c) 2015 Matthieu
  * All rights reserved.
  */
-package intel_8088;
+package intel_8088.biu;
 
 network BusInterfaceUnit {
-	import intel_8088.BusController;
-	import intel_8088.InstructionQueue;
+	import intel_8088.biu.BusController;
+	import intel_8088.biu.InstructionQueue;
 
 	sync {
 		in u16 eu_addr, eu_data;

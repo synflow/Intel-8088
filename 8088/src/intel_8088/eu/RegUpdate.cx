@@ -5,12 +5,12 @@
 package intel_8088.eu;
 
 task RegUpdate {
-	import intel_8088.eu.Opcodes.*;
-	
+	import intel_8088.eu.Consts_8086.*;
+
 	properties {
 		type: "combinational"
 	}
-	
+
 	in sync opcode_t opcode, u16 reg_value, u16 computed;
 	out sync u16 new_value;
 	void loop() {

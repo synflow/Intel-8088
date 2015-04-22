@@ -2,7 +2,7 @@
  * Copyright (c) 2015 Matthieu
  * All rights reserved.
  */
-package intel_8088;
+package intel_8088.biu;
 
 task BusController {
 

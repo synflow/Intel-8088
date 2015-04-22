@@ -6,7 +6,7 @@ package intel_8088;
 
 network CPU {
 	import intel_8088.eu.ExecutionUnit;
-	import intel_8088.BusInterfaceUnit;
+	import intel_8088.biu.BusInterfaceUnit;
 
 	in u8 addrLow_in;
 

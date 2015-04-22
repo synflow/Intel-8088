@@ -1,0 +1,35 @@
+/*
+ * Copyright (c) 2015 Matthieu
+ * All rights reserved.
+ */
+package intel_8088.eu;
+
+bundle Consts_8086 {
+
+	typedef u3 opcode_t;
+
+	u3	OPCODE_MOV = 0,
+		OPCODE_INC = 1,
+		OPCODE_COMPUTED = 7;
+
+	// W = 0
+	u3	REG_AL = 0b000,
+		REG_CL = 0b001,
+		REG_DL = 0b010,
+		REG_BL = 0b011,
+		REG_AH = 0b100,
+		REG_CH = 0b101,
+		REG_DH = 0b110,
+		REG_BH = 0b111;
+
+	// W = 1
+	u3	REG_AX = 0b000,
+		REG_CX = 0b001,
+		REG_DX = 0b010,
+		REG_BX = 0b011,
+		REG_SP = 0b100,
+		REG_BP = 0b101,
+		REG_SI = 0b110,
+		REG_DI = 0b111;
+
+}

@@ -7,6 +7,7 @@ package intel_8088.eu;
 network ExecutionUnit {
 	import intel_8088.eu.InstrDecode;
 	import intel_8088.eu.RegUpdate;
+	import intel_8088.eu.ComputeEA;
 
 	in sync ready u8 instr, sync u16 data_in;
 	
@@ -21,8 +22,10 @@ network ExecutionUnit {
 
 	regs = new RegisterFile();
 	regs.reads(decode.src1, decode.src2, decode.dest, reg_update.new_value);
+	
+	compute_ea = new ComputeEA();
 
-	this.reads(decode.bus_addr, decode.bus_data);
+	this.reads(compute_ea.addr, decode.bus_data);
 }
 
 task RegisterFile {
