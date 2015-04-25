@@ -5,9 +5,10 @@
 package intel_8088.eu;
 
 network ExecutionUnit {
+	import intel_8088.eu.ALU;
+	import intel_8088.eu.ComputeEA;
 	import intel_8088.eu.InstrDecode;
 	import intel_8088.eu.RegUpdate;
-	import intel_8088.eu.ComputeEA;
 
 	in sync ready u8 instr, sync u16 data_in;
 	
@@ -21,27 +22,86 @@ network ExecutionUnit {
 	reg_update.reads(decode.opcode, regs.val1, decode.value);
 
 	regs = new RegisterFile();
-	regs.reads(decode.src1, decode.src2, decode.dest, reg_update.new_value);
-	
+	regs.reads(decode.dest, reg_update.new_value);
+
+	mux_src1 = new task {
+		properties {type: "combinational"}
+		void loop() {
+			if (decode.src1.available()) {
+				regs.src1.write(decode.src1.read());
+			} else {
+				regs.src1.write(compute_ea.reg_addr1.read());
+			}
+		}
+	};
+
+	mux_src2 = new task {
+		properties {type: "combinational"}
+		void loop() {
+			if (decode.src2.available()) {
+				regs.src2.write(decode.src2.read());
+			} else {
+				regs.src2.write(compute_ea.reg_addr2.read());
+			}
+		}
+	};
+
+	alu = new ALU();
+	alu.reads(compute_ea.oper1, compute_ea.oper2);
+
 	compute_ea = new ComputeEA();
+	compute_ea.reads(regs.val1, regs.val2, alu.result);
 
 	this.reads(compute_ea.addr, decode.bus_data);
 }
 
-task RegisterFile {
+// split registers in two Register Files (RFs)
+// based on EA calculation times, we can suppose that:
+//   - BP and SI are in one RF
+//   - BX and DI are in a second RF
+//
+// putting CX/DX in RF1 and AX/BX in RF2 because:
+//   - bit pattern would minimize logic to route to one or the other: given reg, use e ^ g
+//   - allows selection of 8-bit halves in same RF (CL/CH for CX, DL/DH for DX)
+//     again should simplify logic 
 
 /*
-	 * REG    W=0  W=1
-	 * ---    ---  ---
-	 * 000    AL   AX
-	 * 001    CL   CX
-	 * 010    DL   DX
-	 * 011    BL   BX
-	 * 100    AH   SP
-	 * 101    CH   BP
-	 * 110    DH   SI
-	 * 111    BH   DI
-	 */
+ * REG    W=0  W=1
+ * ---    ---  ---
+ * 000    AL   AX
+ * 011    BL   BX
+ * 100    AH   SP
+ * 111    BH   DI
+ */
+ 
+/*
+ * REG    W=0  W=1
+ * ---    ---  ---
+ * 001    CL   CX
+ * 010    DL   DX
+ * 101    CH   BP
+ * 110    DH   SI
+ */
+ 
+task RegisterFile {
+
+	in u3 src1, src2, dest, sync u16 data;
+	out u16 val1, val2;
+
+	u16 registers[8];
+	
+	void loop() {
+		val1.write(registers[src1.read()]);
+		val2.write(registers[src2.read()]);
+		if (data.available) {
+			registers[dest.read()] = data.read();
+		}
+	}
+
+}
+
+task RegisterFile2 {
+
 	in u3 src1, src2, dest, sync u16 data;
 	out u16 val1, val2;
 

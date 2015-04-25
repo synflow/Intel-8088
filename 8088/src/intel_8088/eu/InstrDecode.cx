@@ -10,7 +10,7 @@ task InstrDecode {
 	in sync ready u8 instr, sync u16 bus_data_in;
 	in u16 reg1_value, reg2_value;
 
-	out u3 src1, src2, dest, sync opcode_t opcode, u16 value;
+	out sync u3 src1, sync src2, dest, sync opcode_t opcode, u16 value;
 
 	out sync u16 bus_addr, sync bus_data;
 

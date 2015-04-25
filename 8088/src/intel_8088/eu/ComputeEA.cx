@@ -7,9 +7,11 @@ package intel_8088.eu;
 task ComputeEA {
 	import intel_8088.eu.Consts_8086.*;
 	
-	out u3 src1;
+	in u16 reg_val1, reg_val2, result;
+	out u3 reg_addr1, reg_addr2;
+	out u16 oper1, oper2;
 	out sync u16 addr;
-	
+
 	void loop() {
 		u8 instr_b1 = 0b0000_0000;
 		
@@ -19,8 +21,13 @@ task ComputeEA {
 		
 		if (mod == 0b00) {
 			if (r_m == 0b000) {
-				src1.write(REG_BX);
-				src1.write(REG_SI);
+				reg_addr1.write(REG_BX);
+				reg_addr2.write(REG_SI);
+				idle(1);
+				oper1.write(reg_val1.read());
+				oper2.write(reg_val2.read());
+				fence;
+				addr.write(result.read());
 			}
 		} else if (mod == 0b01) {
 			
