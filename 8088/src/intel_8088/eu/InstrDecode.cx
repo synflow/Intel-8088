@@ -8,9 +8,8 @@ task InstrDecode {
 	import intel_8088.eu.Consts_8086.*;
 
 	in sync ready u8 instr, sync u16 bus_data_in;
-	in u16 reg1_value, reg2_value;
 
-	out sync u3 src1, sync src2, dest, sync opcode_t opcode, u16 value;
+	out sync u3 src, u2 dest, sync opcode_t opcode;
 
 	out sync u16 bus_addr, sync bus_data;
 
@@ -30,20 +29,20 @@ task InstrDecode {
 			u3 r_m = instr_b1 & 7;
 
 			if (mod == 0b11) {
-				src1.write(reg);
-				src2.write(r_m);
-				fence;
-				value.write((u16) (reg1_value.read() + reg2_value.read()));
-				dest.write(d ? reg : r_m);
+				//src1.write(reg);
+				//src2.write(r_m);
+				//fence;
+				//value.write((u16) (reg1_value.read() + reg2_value.read()));
+				//dest.write(d ? reg : r_m);
 				opcode.write(OPCODE_COMPUTED);
 			} else {
-				value.write((u16) (reg1_value.read() + reg2_value.read()));
+				//value.write((u16) (reg1_value.read() + reg2_value.read()));
 			}
 		} else if (instr_b0 >> 3 == 0b01010) { // push
 			u3 reg = (instr_b0 >> 3) & 7;
-			src1.write(REG_SP);
+			//src1.write(REG_SP);
 			// do SP += 2
-			src1.write(reg);
+			//src1.write(reg);
 			bus_addr.write(50); // value of SP
 			bus_data.write(reg); // value of data to push
 		} else if (instr_b0 >> 2 == 0b100010) { // MOV register/memory to/from register
@@ -55,15 +54,15 @@ task InstrDecode {
 			u3 r_m = instr_b1 & 7;
 
 			if (mod == 0b11) {
-				src1.write(d ? r_m : reg);
-				dest.write(d ? reg : r_m);
+				//src1.write(d ? r_m : reg);
+				//dest.write(d ? reg : r_m);
 				opcode.write(OPCODE_MOV);
 			}
 		} else if (instr_b0 >> 3 == 0b01000) { // INC register
 			u3 reg = (u3) instr_b0;
-			src1.write(reg);
+			//src1.write(reg);
 			fence;
-			dest.write(reg);
+			//dest.write(reg);
 			opcode.write(OPCODE_INC);
 		} else {
 			// Jxx instructions

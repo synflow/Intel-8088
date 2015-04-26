@@ -16,21 +16,36 @@ network ExecutionUnit {
 	out sync u16 data_out;
 
 	decode = new InstrDecode();
-	decode.reads(instr, data_in, regs.val1, regs.val2);
+	decode.reads(instr, data_in);
 
 	reg_update = new RegUpdate();
-	reg_update.reads(decode.opcode, regs.val1, decode.value);
+	reg_update.reads(decode.opcode, rf1.result);
 
-	regs = new RegisterFile();
-	regs.reads(decode.dest, reg_update.new_value);
+	rf1 = new RegisterFile();
+	rf2 = new RegisterFile();
+
+	mux_src = new task {
+		properties {type: "combinational"}
+		sync { out u2 rf1_src, rf2_src; } 
+		void loop() {
+			if (decode.src.available()) {
+				u3 addr = decode.src.read();
+				if (addr[1] ^ addr[0]) {
+					rf2_src.write(addr >> 1);
+				} else {
+					rf1_src.write(addr >> 1);
+				}
+			}
+		}
+	};
 
 	mux_src1 = new task {
 		properties {type: "combinational"}
 		void loop() {
-			if (decode.src1.available()) {
-				regs.src1.write(decode.src1.read());
+			if (mux_src.rf1_src.available()) {
+				rf1.src.write(mux_src.rf1_src.read());
 			} else {
-				regs.src1.write(compute_ea.reg_addr1.read());
+				rf1.src.write(compute_ea.reg_addr1.read());
 			}
 		}
 	};
@@ -38,19 +53,22 @@ network ExecutionUnit {
 	mux_src2 = new task {
 		properties {type: "combinational"}
 		void loop() {
-			if (decode.src2.available()) {
-				regs.src2.write(decode.src2.read());
+			if (mux_src.rf2_src.available()) {
+				rf2.src.write(mux_src.rf2_src.read());
 			} else {
-				regs.src2.write(compute_ea.reg_addr2.read());
+				rf2.src.write(compute_ea.reg_addr2.read());
 			}
 		}
 	};
+
+	rf1.reads(decode.dest, reg_update.new_value);
+	rf2.reads(decode.dest, reg_update.new_value);
 
 	alu = new ALU();
 	alu.reads(compute_ea.oper1, compute_ea.oper2);
 
 	compute_ea = new ComputeEA();
-	compute_ea.reads(regs.val1, regs.val2, alu.result);
+	compute_ea.reads(alu.result);
 
 	this.reads(compute_ea.addr, decode.bus_data);
 }
@@ -73,7 +91,7 @@ network ExecutionUnit {
  * 100    AH   SP
  * 111    BH   DI
  */
- 
+
 /*
  * REG    W=0  W=1
  * ---    ---  ---
@@ -85,31 +103,13 @@ network ExecutionUnit {
  
 task RegisterFile {
 
-	in u3 src1, src2, dest, sync u16 data;
-	out u16 val1, val2;
+	in u2 src, dest, sync u16 data;
+	out u16 result;
 
-	u16 registers[8];
+	u16 registers[4];
 	
 	void loop() {
-		val1.write(registers[src1.read()]);
-		val2.write(registers[src2.read()]);
-		if (data.available) {
-			registers[dest.read()] = data.read();
-		}
-	}
-
-}
-
-task RegisterFile2 {
-
-	in u3 src1, src2, dest, sync u16 data;
-	out u16 val1, val2;
-
-	u16 registers[8];
-	
-	void loop() {
-		val1.write(registers[src1.read()]);
-		val2.write(registers[src2.read()]);
+		result.write(registers[src.read()]);
 		if (data.available) {
 			registers[dest.read()] = data.read();
 		}
