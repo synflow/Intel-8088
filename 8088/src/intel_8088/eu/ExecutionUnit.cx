@@ -8,7 +8,7 @@ network ExecutionUnit {
 	import intel_8088.eu.ALU;
 	import intel_8088.eu.ComputeEA;
 	import intel_8088.eu.InstrDecode;
-	import intel_8088.eu.RegUpdate;
+	import intel_8088.eu.RegisterFile;
 
 	in sync ready u8 instr, sync u16 data_in;
 	
@@ -18,101 +18,15 @@ network ExecutionUnit {
 	decode = new InstrDecode();
 	decode.reads(instr, data_in);
 
-	reg_update = new RegUpdate();
-	reg_update.reads(decode.opcode, rf1.result);
-
-	rf1 = new RegisterFile();
-	rf2 = new RegisterFile();
-
-	mux_src = new task {
-		properties {type: "combinational"}
-		sync { out u2 rf1_src, rf2_src; } 
-		void loop() {
-			if (decode.src.available()) {
-				u3 addr = decode.src.read();
-				if (addr[1] ^ addr[0]) {
-					rf2_src.write(addr >> 1);
-				} else {
-					rf1_src.write(addr >> 1);
-				}
-			}
-		}
-	};
-
-	mux_src1 = new task {
-		properties {type: "combinational"}
-		void loop() {
-			if (mux_src.rf1_src.available()) {
-				rf1.src.write(mux_src.rf1_src.read());
-			} else {
-				rf1.src.write(compute_ea.reg_addr1.read());
-			}
-		}
-	};
-
-	mux_src2 = new task {
-		properties {type: "combinational"}
-		void loop() {
-			if (mux_src.rf2_src.available()) {
-				rf2.src.write(mux_src.rf2_src.read());
-			} else {
-				rf2.src.write(compute_ea.reg_addr2.read());
-			}
-		}
-	};
-
-	rf1.reads(decode.dest, reg_update.new_value);
-	rf2.reads(decode.dest, reg_update.new_value);
+	rf = new RegisterFile();
+	rf.reads(decode.src, compute_ea.reg_addr1, compute_ea.reg_addr2);
+	rf.reads(decode.dest, alu.result);
 
 	alu = new ALU();
-	alu.reads(compute_ea.oper1, compute_ea.oper2);
+	alu.reads(decode.opcode, rf.res_half1, rf.res_half2);
 
 	compute_ea = new ComputeEA();
 	compute_ea.reads(alu.result);
 
 	this.reads(compute_ea.addr, decode.bus_data);
-}
-
-// split registers in two Register Files (RFs)
-// based on EA calculation times, we can suppose that:
-//   - BP and SI are in one RF
-//   - BX and DI are in a second RF
-//
-// putting CX/DX in RF1 and AX/BX in RF2 because:
-//   - bit pattern would minimize logic to route to one or the other: given reg, use e ^ g
-//   - allows selection of 8-bit halves in same RF (CL/CH for CX, DL/DH for DX)
-//     again should simplify logic 
-
-/*
- * REG    W=0  W=1
- * ---    ---  ---
- * 000    AL   AX
- * 011    BL   BX
- * 100    AH   SP
- * 111    BH   DI
- */
-
-/*
- * REG    W=0  W=1
- * ---    ---  ---
- * 001    CL   CX
- * 010    DL   DX
- * 101    CH   BP
- * 110    DH   SI
- */
- 
-task RegisterFile {
-
-	in u2 src, dest, sync u16 data;
-	out u16 result;
-
-	u16 registers[4];
-	
-	void loop() {
-		result.write(registers[src.read()]);
-		if (data.available) {
-			registers[dest.read()] = data.read();
-		}
-	}
-
 }

@@ -5,15 +5,21 @@
 package intel_8088.eu;
 
 task ALU {
+	import intel_8088.eu.Consts_8086.*;
+
 	properties {
 		type: "combinational"
 	}
 
-	in u16 op1, op2;
+	in sync opcode_t opcode; in u16 op1, op2;
 	out u16 result;
 
 	void loop() {
-		result.write(0);
+		if (opcode.read() == OPCODE_MOV) {
+			result.write(op1.read());
+		} else if (opcode.read() == OPCODE_INC) {
+			result.write((u16) (op1.read() + 1));
+		}
 	}
 
 }

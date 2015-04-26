@@ -8,7 +8,7 @@ task ComputeEA {
 	import intel_8088.eu.Consts_8086.*;
 	
 	in u16 result;
-	out u2 reg_addr1, reg_addr2;
+	sync { out u2 reg_addr1, reg_addr2; }
 	out u16 oper1, oper2;
 	out sync u16 addr;
 
