@@ -31,76 +31,125 @@ package intel_8088.eu;
  * 101    CH   BP
  * 110    DH   SI
  */
- 
 network RegisterFile {
 
 	sync {
-		in u3 addr, u2 addr_half1, addr_half2;
+		in u3 addr_a, addr_b, u2 addr_half1, addr_half2, u3 dest;
 	}
-	in u3 dest, u16 data;
-	out u16 result, res_half1, res_half2;
+	in u16 data;
+	out u16 oper1, oper2;
 
 	rf1 = new HalfRF();
 	rf2 = new HalfRF();
 
-	mux_addr = new task {
-		properties {type: "combinational"}
-		out u2 rf1_addr, rf2_addr;
+	addr2half = new SplitAddress();
+	addr2half.reads(addr_a);
+
+	dest2half = new SplitAddress();
+	dest2half.reads(dest);
+
+	// just a task to store the adress for one cycle
+	addr_delayed = new task {
+		out sync u3 addr;
 		void loop() {
-			if (addr.available()) {
-				u3 addr = addr.read();
-				if (addr[1] ^ addr[0]) {
-					rf2_addr.write(addr >> 1);
-				} else {
-					rf1_addr.write(addr >> 1);
-				}
-			}
+			addr.write(addr_a.read());
 		}
 	};
 
-	mux_src1 = new task {
-		properties {type: "combinational"}
+	route_addr_rf1 = new task {
+		properties { type: "combinational" }
 		void loop() {
-			if (addr_half1.available()) {
+			if (addr2half.rf1_addr.available()) {
+				rf1.src.write(addr2half.rf1_addr.read());
+			} else {
 				rf1.src.write(addr_half1.read());
-			} else {
-				rf1.src.write(mux_addr.rf1_addr.read());
 			}
 		}
 	};
 
-	mux_src2 = new task {
-		properties {type: "combinational"}
+	route_addr_rf2 = new task {
+		properties { type: "combinational" }
 		void loop() {
-			if (addr_half2.available()) {
-				rf2.src.write(addr_half2.read());
+			if (addr2half.rf2_addr.available()) {
+				rf2.src.write(addr2half.rf2_addr.read());
 			} else {
-				rf2.src.write(mux_addr.rf2_addr.read());
+				rf2.src.write(addr_half2.read());
 			}
 		}
 	};
 
-	//rf1.reads(dest, data);
-	//rf2.reads(dest, data);
+	rf1.reads(dest2half.rf1_addr, data);
+	rf2.reads(dest2half.rf2_addr, data);
 
-	rf1.writes(result);
+	get_operands = new task {
+		properties { type: "combinational" }
+		void loop() {
+			if (addr_delayed.addr.available) {
+				// in case the register file was given an address, not two half-addresses
+				// first we get the result from the proper half RF
+				u3 addr = addr_delayed.addr.read();
+				u16 result;
+				if (addr[1] ^ addr[0]) {
+					result = rf2.result.read();
+				} else {
+					result = rf1.result.read();
+				}
 
-	this.reads(rf1.result, rf2.result);
+				// result goes to first operand in this cycle
+				// and next cycle it will become the second operand
+				oper1.write(result);
+				oper2.write(oper_delayed.dout.read());
+				oper_delayed.din.write(result);
+			} else {
+				oper1.write(rf1.result.read());
+				oper2.write(rf2.result.read());
+			}
+		}
+	};
+
+	oper_delayed = new task {
+		in u16 din; out u16 dout;
+		void loop() {
+			dout.write(din.read());
+		}
+	};
+
+}
+
+task SplitAddress {
+	properties { type: "combinational" }
+
+	sync {
+		in u3 addr;
+		out u2 rf1_addr, rf2_addr;
+	}
+
+	void loop() {
+		if (addr.available()) {
+			u3 addr = addr.read();
+			if (addr[1] ^ addr[0]) {
+				rf2_addr.write(addr >> 1);
+			} else {
+				rf1_addr.write(addr >> 1);
+			}
+		}
+	}
 
 }
 
 task HalfRF {
 
-	in u2 src/*, dest, sync u16 data*/;
+	in u2 src, sync dest, u16 data;
 	out u16 result;
 
 	u16 registers[4];
-	
+
 	void loop() {
+		// update first, so we get the correct values in case of simultaneous read+write
+		if (dest.available) {
+			registers[dest.read()] = data.read();
+		}
 		result.write(registers[src.read()]);
-//		if (data.available) {
-//			registers[dest.read()] = data.read();
-//		}
 	}
 
 }

@@ -9,11 +9,11 @@ task InstrDecode {
 
 	in sync ready u8 instr, sync u16 bus_data_in;
 
-	out sync u3 src, u2 dest, sync opcode_t opcode;
-
-	out sync u16 bus_addr, sync bus_data;
-
-	out sync u2 qs;
+	sync {
+		out u3 src, u3 dest, opcode_t opcode;
+		out u16 bus_addr, bus_data;
+		out u2 qs;
+	}
 
 	const u2 /*NORMAL = 0,*/ FIRST_BYTE = 1, NEXT_BYTE = 3, EMPTIED = 2;
 

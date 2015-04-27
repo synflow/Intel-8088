@@ -8,26 +8,46 @@ task ComputeEA {
 	import intel_8088.eu.Consts_8086.*;
 	
 	in u16 result;
-	sync { out u2 reg_addr1, reg_addr2; }
-	out u16 oper1, oper2;
-	out sync u16 addr;
+	sync {
+		out u3 reg_addr, u2 half1, half2, u16 addr;
+	}
 
 	void loop() {
 		u8 instr_b1 = 0b0000_0000;
-		
+
 		u2 mod = instr_b1 >> 6;
 		u3 reg = (instr_b1 >> 3) & 7;
 		u3 r_m = instr_b1 & 7;
 		
 		if (mod == 0b00) {
 			if (r_m == 0b000) {
-				//reg_addr1.write(REG_BX);
-				//reg_addr2.write(REG_SI);
+				half1.write(REG_BX >> 1);
+				half2.write(REG_SI >> 1);
 				idle(1);
-				//oper1.write(reg_val1.read());
-				//oper2.write(reg_val2.read());
-				//fence;
 				addr.write(result.read());
+			} else if (r_m == 0b001) {
+				reg_addr.write(REG_BX);
+				reg_addr.write(REG_DI);
+				idle(1);
+				addr.write(result.read());
+			} else if (r_m == 0b010) {
+				reg_addr.write(REG_BP);
+				reg_addr.write(REG_SI);
+				idle(1);
+				addr.write(result.read());
+			} else if (r_m == 0b011) {
+				half1.write(REG_BP >> 1);
+				half2.write(REG_DI >> 1);
+				idle(1);
+				addr.write(result.read());
+			} else if (r_m == 0b100) {
+				half1.write(REG_SI >> 1);
+			} else if (r_m == 0b101) {
+				half1.write(REG_DI >> 1);
+			} else if (r_m == 0b110) {
+				
+			} else /* if (r_m == 0b111) */ {
+				half1.write(REG_BX >> 1);
 			}
 		} else if (mod == 0b01) {
 			
