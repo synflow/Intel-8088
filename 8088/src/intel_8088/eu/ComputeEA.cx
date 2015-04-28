@@ -7,54 +7,65 @@ package intel_8088.eu;
 task ComputeEA {
 	import intel_8088.eu.Consts_8086.*;
 	
-	in u16 result;
 	sync {
-		out u3 reg_addr, u2 half1, half2, u16 addr;
+		in u8 instr;
+		out u2 half1, half2, u16 addr;
 	}
+	in u16 result;
 
 	void loop() {
-		u8 instr_b1 = 0b0000_0000;
+		u8 instr_b1 = instr.read();
 
 		u2 mod = instr_b1 >> 6;
 		u3 reg = (instr_b1 >> 3) & 7;
 		u3 r_m = instr_b1 & 7;
 		
-		if (mod == 0b00) {
+		if (mod == 0b11) {
+			// Register Mode
+			// nothing to do for us
+		} else {
 			if (r_m == 0b000) {
-				half1.write(REG_BX >> 1);
-				half2.write(REG_SI >> 1);
+				half1.write(get_half(REG_BX));
+				half2.write(get_half(REG_SI));
 				idle(1);
-				addr.write(result.read());
+				if (mod == 0b00) {
+					addr.write(result.read());
+				} else if (mod == 0b01) {
+					// add D8
+				} else if (mod == 0b10) {
+					// add D16
+				}
 			} else if (r_m == 0b001) {
-				reg_addr.write(REG_BX);
-				reg_addr.write(REG_DI);
+				half1.write(get_half(REG_BX));
+				half1.write(get_half(REG_DI));
 				idle(1);
 				addr.write(result.read());
 			} else if (r_m == 0b010) {
-				reg_addr.write(REG_BP);
-				reg_addr.write(REG_SI);
+				half2.write(get_half(REG_BP));
+				half2.write(get_half(REG_SI));
 				idle(1);
 				addr.write(result.read());
 			} else if (r_m == 0b011) {
-				half1.write(REG_BP >> 1);
-				half2.write(REG_DI >> 1);
+				half1.write(get_half(REG_DI));
+				half2.write(get_half(REG_BP));
 				idle(1);
 				addr.write(result.read());
 			} else if (r_m == 0b100) {
-				half1.write(REG_SI >> 1);
+				half2.write(get_half(REG_SI));
 			} else if (r_m == 0b101) {
-				half1.write(REG_DI >> 1);
+				half1.write(get_half(REG_DI));
 			} else if (r_m == 0b110) {
-				
+				if (mod == 0b00) {
+					// immediate
+					addr.write(result.read());
+				} else if (mod == 0b01) {
+					// add D8
+				} else if (mod == 0b10) {
+					// add D16
+				}
 			} else /* if (r_m == 0b111) */ {
-				half1.write(REG_BX >> 1);
+				half1.write(get_half(REG_BX));
 			}
-		} else if (mod == 0b01) {
-			
-		} else if (mod == 0b10) {
-			
-		} else {
-			
 		}
 	}
 }

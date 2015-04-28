@@ -13,6 +13,7 @@ task InstrDecode {
 		out u3 src, u3 dest, opcode_t opcode;
 		out u16 bus_addr, bus_data;
 		out u2 qs;
+		out u8 instr_mem;
 	}
 
 	const u2 /*NORMAL = 0,*/ FIRST_BYTE = 1, NEXT_BYTE = 3, EMPTIED = 2;
@@ -29,14 +30,12 @@ task InstrDecode {
 			u3 r_m = instr_b1 & 7;
 
 			if (mod == 0b11) {
-				//src1.write(reg);
-				//src2.write(r_m);
-				//fence;
-				//value.write((u16) (reg1_value.read() + reg2_value.read()));
-				//dest.write(d ? reg : r_m);
-				opcode.write(OPCODE_COMPUTED);
+				src.write(reg);
+				src.write(r_m);
+				dest.write(d ? reg : r_m);
+				opcode.write(OPCODE_ADD);
 			} else {
-				//value.write((u16) (reg1_value.read() + reg2_value.read()));
+				instr_mem.write(instr_b1);
 			}
 		} else if (instr_b0 >> 3 == 0b01010) { // push
 			u3 reg = (instr_b0 >> 3) & 7;
@@ -54,8 +53,8 @@ task InstrDecode {
 			u3 r_m = instr_b1 & 7;
 
 			if (mod == 0b11) {
-				//src1.write(d ? r_m : reg);
-				//dest.write(d ? reg : r_m);
+				src.write(d ? r_m : reg);
+				dest.write(d ? reg : r_m);
 				opcode.write(OPCODE_MOV);
 			}
 		} else if (instr_b0 >> 3 == 0b01000) { // INC register
