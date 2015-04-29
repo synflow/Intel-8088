@@ -13,7 +13,7 @@ task BusController {
 
 	out sync u8 instr;
 	
-	in u8 bus_data;
+	in u20 bus_addr, u8 bus_data;
 	out sync u16 eu_data;
 
 	void loop() {

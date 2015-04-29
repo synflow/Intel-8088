@@ -11,9 +11,11 @@ network ExecutionUnit {
 	import intel_8088.eu.RegisterFile;
 
 	in sync ready u8 instr, sync u16 data_in;
-	
-	out sync u16 addr;
-	out sync u16 data_out;
+
+	out u2 segment;
+	sync {
+		out u16 addr, data_out;
+	}
 
 	decode = new InstrDecode();
 	decode.reads(instr, data_in);
@@ -28,5 +30,5 @@ network ExecutionUnit {
 	compute_ea = new ComputeEA();
 	compute_ea.reads(decode.instr_mem, alu.result);
 
-	this.reads(compute_ea.addr, decode.bus_data);
+	this.reads(compute_ea.segment, compute_ea.addr, decode.bus_data);
 }

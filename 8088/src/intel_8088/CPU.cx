@@ -16,7 +16,7 @@ network CPU {
 	out bool rd, wr;
 	
 	biu = new BusInterfaceUnit();
-	biu.reads(eu.addr, eu.data_out, addrLow_in);
+	biu.reads(eu.segment, eu.addr, eu.data_out, addrLow_in);
 
 	eu = new ExecutionUnit();
 	eu.reads(biu.instr, biu.eu_data_out);

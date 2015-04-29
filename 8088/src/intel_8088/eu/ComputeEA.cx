@@ -5,12 +5,12 @@
 package intel_8088.eu;
 
 task ComputeEA {
-	import intel_8088.eu.Consts_8086.*;
+	import intel_8088.Consts_8086.*;
 	
 	sync {
 		in u8 instr;
-		out u2 half1, half2, u16 addr;
 	}
+	out sync u2 half1, sync half2, u2 segment, sync u16 addr;
 	in u16 result;
 
 	void loop() {

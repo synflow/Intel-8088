@@ -5,7 +5,7 @@
 package intel_8088.eu;
 
 task InstrDecode {
-	import intel_8088.eu.Consts_8086.*;
+	import intel_8088.Consts_8086.*;
 
 	in sync ready u8 instr, sync u16 bus_data_in;
 
@@ -36,6 +36,13 @@ task InstrDecode {
 				opcode.write(OPCODE_ADD);
 			} else {
 				instr_mem.write(instr_b1);
+				fence;
+				bus_data_in.read();
+				opcode.write(OPCODE_ADD);
+				// TODO: write data from bus to ALU
+				if (d) {
+					dest.write(reg);
+				}
 			}
 		} else if (instr_b0 >> 3 == 0b01010) { // push
 			u3 reg = (instr_b0 >> 3) & 7;

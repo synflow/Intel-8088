@@ -5,7 +5,7 @@
 package intel_8088.eu;
 
 task ALU {
-	import intel_8088.eu.Consts_8086.*;
+	import intel_8088.Consts_8086.*;
 
 	properties {
 		type: "combinational"

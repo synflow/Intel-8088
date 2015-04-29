@@ -7,7 +7,9 @@ package intel_8088.biu;
 network BusInterfaceUnit {
 	import intel_8088.biu.BusController;
 	import intel_8088.biu.InstructionQueue;
+	import intel_8088.biu.BIU_RF;
 
+	in u2 segment;
 	sync {
 		in u16 eu_addr, eu_data;
 	}
@@ -28,5 +30,20 @@ network BusInterfaceUnit {
 
 	queue = new InstructionQueue();
 	queue.writes(instr);
+	
+	rf = new BIU_RF();
+	rf.reads(segment, dummy.dest, dummy.data);
+	
+	// 8086 family Users Manual, chapter 4 Hardware reference information, 
+	// The BIU combines segment and offset values in its dedicated adder to derive 20-bit addresses
+	compute_real = new task {
+		void loop() {
+			ctrl.bus_addr.write((u20) ((rf.dout.read() << 4) + eu_addr.read()));
+		}
+	};
+	
+	dummy = new task {
+		out sync u2 dest, u16 data;
+	};
 
 }

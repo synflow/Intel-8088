@@ -2,7 +2,7 @@
  * Copyright (c) 2015 Matthieu
  * All rights reserved.
  */
-package intel_8088.eu;
+package intel_8088;
 
 bundle Consts_8086 {
 
@@ -32,6 +32,12 @@ bundle Consts_8086 {
 		REG_BP = 0b101,
 		REG_SI = 0b110,
 		REG_DI = 0b111;
+
+	// segment registers
+	u2	REG_ES = 0b00,
+		REG_CS = 0b01,
+		REG_SS = 0b10,
+		REG_DS = 0b11;
 
 	/**
 	 * Returns the address suitable for use with a half register file.
