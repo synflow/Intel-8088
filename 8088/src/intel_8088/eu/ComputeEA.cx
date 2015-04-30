@@ -52,8 +52,12 @@ task ComputeEA {
 				addr.write(result.read());
 			} else if (r_m == 0b100) {
 				half2.write(get_half(REG_SI));
+				idle(1);
+				addr.write(result.read());
 			} else if (r_m == 0b101) {
 				half1.write(get_half(REG_DI));
+				idle(1);
+				addr.write(result.read());
 			} else if (r_m == 0b110) {
 				if (mod == 0b00) {
 					// immediate
@@ -65,6 +69,8 @@ task ComputeEA {
 				}
 			} else /* if (r_m == 0b111) */ {
 				half1.write(get_half(REG_BX));
+				idle(1);
+				addr.write(result.read());
 			}
 		}
 	}
