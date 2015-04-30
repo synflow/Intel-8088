@@ -1,6 +1,7 @@
 /.ir
 /projects
 /sim
+/soft
 /testbench
 /verilog-gen
 /vhdl-gen
