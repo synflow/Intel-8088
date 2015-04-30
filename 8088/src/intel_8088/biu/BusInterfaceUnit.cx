@@ -15,18 +15,15 @@ network BusInterfaceUnit {
 	}
 	out sync u16 eu_data_out;
 
-	out sync u8 addrLow_out;
-	out u12 addrHigh;
-
-	out bool rd, wr;
+	out sync u20 bus_addr, sync u8 bus_data_o;
 
 	out sync ready u8 instr;
 	
-	in u8 bus_data;
+	in u8 bus_data_i;
 
 	ctrl = new BusController();
-	ctrl.reads(bus_data);
-	ctrl.writes(addrLow_out, addrHigh, rd, wr, queue.instr_in, eu_data_out);
+	ctrl.reads(bus_data_i);
+	ctrl.writes(bus_addr, bus_data_o, eu_data_out, queue.instr_in);
 
 	queue = new InstructionQueue();
 	queue.writes(instr);
@@ -38,7 +35,7 @@ network BusInterfaceUnit {
 	// The BIU combines segment and offset values in its dedicated adder to derive 20-bit addresses
 	compute_real = new task {
 		void loop() {
-			ctrl.bus_addr.write((u20) ((rf.dout.read() << 4) + eu_addr.read()));
+			ctrl.addr_computed.write((u20) ((rf.dout.read() << 4) + eu_addr.read()));
 		}
 	};
 	

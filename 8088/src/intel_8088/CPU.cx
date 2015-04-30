@@ -8,19 +8,15 @@ network CPU {
 	import intel_8088.eu.ExecutionUnit;
 	import intel_8088.biu.BusInterfaceUnit;
 
-	in u8 addrLow_in;
+	in u8 data_i;
+	out sync u20 addr, sync u8 data_o;
 
-	out sync u8 addrLow_out;
-	out u12 addrHigh;
-
-	out bool rd, wr;
-	
 	biu = new BusInterfaceUnit();
-	biu.reads(eu.segment, eu.addr, eu.data_out, addrLow_in);
+	biu.reads(eu.segment, eu.addr, eu.data_out, data_i);
 
 	eu = new ExecutionUnit();
 	eu.reads(biu.instr, biu.eu_data_out);
 
-	this.reads(biu.addrLow_out, biu.addrHigh, biu.rd, biu.wr);
+	this.reads(biu.bus_addr, biu.bus_data_o);
 
 }

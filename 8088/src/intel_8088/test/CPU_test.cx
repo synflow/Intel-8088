@@ -1,0 +1,36 @@
+/*
+ * Copyright (c) 2015 Matthieu
+ * All rights reserved.
+ */
+package intel_8088.test;
+
+network CPU_test {
+	import intel_8088.CPU;
+
+	stimulus = new task {
+		void setup() {
+			idle(1000);
+		}
+	};
+
+	cpu = new CPU();
+
+	bus = new task {
+
+		u8 memory[1 << 20];
+
+		void loop() {
+			if (cpu.addr.available) {
+				if (cpu.data_o.available) {
+					memory[cpu.addr.read] = cpu.data_o.read();
+					idle(3);
+				} else {
+					u8 data = memory[cpu.addr.read()];
+					idle(2);
+					cpu.data_i.write(data);
+				}
+			}
+		}
+	};
+
+}

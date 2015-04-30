@@ -5,25 +5,15 @@
 package intel_8088.biu;
 
 task BusController {
-
-	out sync u8 addrLow_out;
-	out u12 addrHigh;
-
-	out bool rd, wr;
-
-	out sync u8 instr;
 	
-	in u20 bus_addr, u8 bus_data;
-	out sync u16 eu_data;
+	in u20 addr_computed, u8 bus_data;
+	sync {
+		out u20 addr, u8 data_o, u16 eu_data, u8 instr;
+	}
 
 	void loop() {
 		if (true) { // instruction requested
-			addrLow_out.write(3);
-			addrHigh.write(18);
-			
-			fence;
-			
-			rd.write(0);
+			addr.write(3);
 			
 			fence;
 			
