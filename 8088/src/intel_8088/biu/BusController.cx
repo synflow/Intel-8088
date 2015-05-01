@@ -5,18 +5,45 @@
 package intel_8088.biu;
 
 task BusController {
-	
-	in u20 addr_computed, u8 bus_data;
+	import intel_8088.Consts_8086.*;
+
+	in u8 bus_data;
+	in u2 eu_segment, sync u16 eu_addr, sync eu_data_in;
+
+	in u20 addr_computed, bool empty_queue;
 	sync {
-		out u20 addr, u8 data_o, u16 eu_data, u8 instr;
+		out u8 instr, u20 addr, u8 data_o, u16 eu_data_out;
 	}
+	out u2 segment, u16 offset;
+
+	u16 ip;
 
 	void loop() {
-		if (true) { // instruction requested
-			addr.write(3);
-			
-			fence;
-			
+		if (eu_addr.available) {
+			// EU wants to read or write, it has priority over fetch
+			print("a");
+			if (eu_data_in.available) {
+				// write requested
+				print("b");
+			} else {
+				// read requested
+				eu_addr.read();
+				print("c");
+			}
+		} else if (empty_queue.read()) {
+			// TODO load CS from RF
+			// send IP to compute_real
+			// get computed address and send it to "addr"
+			// wait for result
+			// send it to queue
+			segment.write(REG_CS);
+			offset.write(ip);
+			ip++;
+
+			idle(1);
+
+			addr.write(addr_computed.read);
+
 			// read data in
 			print("read data");
 			instr.write(bus_data.read());
