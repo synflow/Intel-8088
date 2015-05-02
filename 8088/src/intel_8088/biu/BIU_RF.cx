@@ -9,7 +9,10 @@ task BIU_RF {
 	in u16 data;
 	out u16 dout;
 
-	u16 registers[4];
+	// segment registers
+	// ES, CS, SS, DS
+	// initial value of CS is FFFFH
+	u16 registers[4] = {0, 0xFFFF, 0, 0};
 
 	void loop() {
 		// update first, so we get the correct values in case of simultaneous read+write
