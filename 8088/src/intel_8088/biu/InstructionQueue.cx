@@ -9,24 +9,28 @@ task InstructionQueue {
 	u8 queue[4];
 	u3 count;
 
-	in sync u8 instr_in;
-
+	in sync ready u8 instr_in;
 	out sync ready u8 instr;
-	out bool empty;
+
+	void do_write() {
+		instr.write(queue[0]);
+		for (u3 i = 0; i < 3; i++) {
+			queue[i] = queue[i + 1];
+		}
+		
+		count--;
+	}
 
 	void loop() {
-		if (true && count > 0) {
-			instr.write(queue[0]);
-			for (u3 i = 0; i < 3; i++) {
-				queue[i] = queue[i + 1];
+		if (count == 4) {
+			do_write();
+		} else {
+			queue[count] = instr_in.read();
+			count++;
+			if (instr.ready) { 
+				do_write();
 			}
-			
-			count--;
-			empty.write(count == 0);
-		}
-
-		if (count < 4) {
-			queue[count - 1] = instr_in.read();
 		}
 	}
+
 }

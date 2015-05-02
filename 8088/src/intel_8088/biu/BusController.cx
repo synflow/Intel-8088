@@ -10,9 +10,10 @@ task BusController {
 	in u8 bus_data;
 	in u2 eu_segment, sync u16 eu_addr, sync eu_data_in;
 
-	in u20 addr_computed, bool empty_queue;
+	in u20 addr_computed;
+	out sync ready u8 instr;
 	sync {
-		out u8 instr, u20 addr, u8 data_o, u16 eu_data_out;
+		out u20 addr, u8 data_o, u16 eu_data_out;
 	}
 	out u2 segment, u16 offset;
 
@@ -30,7 +31,7 @@ task BusController {
 				eu_addr.read();
 				print("c");
 			}
-		} else if (empty_queue.read()) {
+		} else if (instr.ready) {
 			// TODO load CS from RF
 			// send IP to compute_real
 			// get computed address and send it to "addr"

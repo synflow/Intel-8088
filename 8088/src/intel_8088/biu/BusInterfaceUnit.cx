@@ -22,7 +22,7 @@ network BusInterfaceUnit {
 	in u8 bus_data_i;
 
 	ctrl = new BusController();
-	ctrl.reads(bus_data_i, eu_segment, eu_addr, eu_data, queue.empty);
+	ctrl.reads(bus_data_i, eu_segment, eu_addr, eu_data);
 	ctrl.writes(queue.instr_in, bus_addr, bus_data_o, eu_data_out);
 
 	queue = new InstructionQueue();
