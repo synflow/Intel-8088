@@ -21,11 +21,21 @@ network CPU_test {
 
 		void loop() {
 			if (cpu.addr.available) {
+				u20 addr = cpu.addr.read();
 				if (cpu.data_o.available) {
-					memory[cpu.addr.read] = cpu.data_o.read();
+					print("write address ", addr);
+					memory[addr] = cpu.data_o.read();
 					idle(3);
 				} else {
-					u8 data = memory[cpu.addr.read()];
+					print("read address ", addr);
+					u8 data;
+					if (addr == 0xFFFF0) {
+						data = 0x03;
+					} else if (addr == 0xFFFF1) {
+						data = 0x04;
+					} else {
+						data = memory[addr];
+					}
 					idle(2);
 					cpu.data_i.write(data);
 				}
