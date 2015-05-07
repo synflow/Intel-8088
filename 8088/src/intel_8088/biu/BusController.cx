@@ -20,34 +20,35 @@ task BusController {
 	u16 ip;
 
 	void loop() {
-		if (eu_addr.available) {
-			// EU wants to read or write, it has priority over fetch
-			print("a");
-			if (eu_data_in.available) {
-				// write requested
-				print("b");
-			} else {
-				// read requested
-				eu_addr.read();
-				print("c");
+		// as long as nothing from EU comes
+		while (eu_addr.available) {
+			if (instr.ready) {
+				segment.write(REG_CS);
+				offset.write(ip);
+				ip++;
+
+				// TODO do this differently, because we should not make the EU wait
+				// for more than one cycle
+				idle(1);
+
+				addr.write(addr_computed.read);
+
+				fence;
+
+				// read data in
+				print("read data");
+				instr.write(bus_data.read());
 			}
-		} else if (instr.ready) {
-			// TODO load CS from RF
-			// send IP to compute_real
-			// get computed address and send it to "addr"
-			// wait for result
-			// send it to queue
-			segment.write(REG_CS);
-			offset.write(ip);
-			ip++;
+		}
 
-			idle(1);
-
-			addr.write(addr_computed.read);
-
-			// read data in
-			print("read data");
-			instr.write(bus_data.read());
+		// EU wants to read or write, it has priority over fetch
+		print("a");
+		if (eu_data_in.available) {
+			// write requested
+			print("b");
+		} else {
+			// read requested
+			print("c");
 		}
 	}
 
