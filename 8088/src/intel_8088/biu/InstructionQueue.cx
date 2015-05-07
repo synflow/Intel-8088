@@ -6,30 +6,34 @@ package intel_8088.biu;
 
 task InstructionQueue {
 
+	sync ready {
+		in u8 instr_in;
+		out u8 instr;
+	}
+
 	u8 queue[4];
 	u3 count;
-
-	in sync ready u8 instr_in;
-	out sync ready u8 instr;
 
 	void do_write() {
 		instr.write(queue[0]);
 		for (u3 i = 0; i < 3; i++) {
 			queue[i] = queue[i + 1];
 		}
-		
 		count--;
+	}
+	
+	void do_read() {
+		queue[count] = instr_in.read();
+		count++;
 	}
 
 	void loop() {
-		if (count == 4) {
+		if (instr_in.available && count != 4) {
+			do_read();
+		}
+
+		if (instr.ready && count != 0) {
 			do_write();
-		} else {
-			queue[count] = instr_in.read();
-			count++;
-			if (instr.ready) { 
-				do_write();
-			}
 		}
 	}
 
