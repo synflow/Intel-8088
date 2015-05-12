@@ -11,7 +11,7 @@ task ALU {
 		type: "combinational"
 	}
 
-	in sync opcode_t opcode; in u16 op1, op2;
+	in opcode_t opcode, u16 op1, op2;
 	out u16 result;
 
 	void loop() {

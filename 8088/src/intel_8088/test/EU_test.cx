@@ -2,7 +2,7 @@
  * Copyright (c) 2015 Matthieu
  * All rights reserved.
  */
-package intel_8088.eu;
+package intel_8088.test;
 
 network EU_test {
 	import intel_8088.eu.ExecutionUnit;
@@ -14,9 +14,9 @@ network EU_test {
 			eu.data_in.write(0);
 
 			eu.instr.write(0x8B);
-			eu.instr.write(0xCB);
+			eu.instr.write(0b11_001_011);
 			eu.instr.write(0x8B);
-			eu.instr.write(0xD1);
+			eu.instr.write(0b11_110_001);
 		}
 	};
 

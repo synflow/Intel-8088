@@ -8,7 +8,7 @@ network CPU {
 	import intel_8088.eu.ExecutionUnit;
 	import intel_8088.biu.BusInterfaceUnit;
 
-	in u8 data_i;
+	in sync u8 data_i;
 	out sync u20 addr, sync u8 data_o;
 
 	biu = new BusInterfaceUnit();

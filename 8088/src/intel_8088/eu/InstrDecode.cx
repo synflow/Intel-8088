@@ -10,7 +10,10 @@ task InstrDecode {
 	in sync ready u8 instr, sync u16 bus_data_in;
 
 	sync {
-		out u3 src, u3 dest, opcode_t opcode;
+		out u3 src, u3 dest;
+	}
+	out opcode_t opcode;
+	sync {
 		out u16 bus_addr, bus_data;
 		out u2 qs;
 		out u8 instr_mem;
@@ -20,9 +23,10 @@ task InstrDecode {
 
 	void loop() {
 		u8 instr_b0 = instr.read();
+		print("got instruction byte ", instr_b0);
 		qs.write(FIRST_BYTE);
 		if (instr_b0 >> 2 == 0) { // ADD
-			const bool d = instr_b0[1], w = instr_b0[0];
+			const bool d = instr_b0[1]/*, w = instr_b0[0]*/;
 			u8 instr_b1 = instr.read();
 			qs.write(NEXT_BYTE);
 			u2 mod = instr_b1 >> 6;
@@ -66,9 +70,8 @@ task InstrDecode {
 			}
 		} else if (instr_b0 >> 3 == 0b01000) { // INC register
 			u3 reg = (u3) instr_b0;
-			//src1.write(reg);
-			fence;
-			//dest.write(reg);
+			src.write(reg);
+			dest.write(reg);
 			opcode.write(OPCODE_INC);
 		} else {
 			// Jxx instructions

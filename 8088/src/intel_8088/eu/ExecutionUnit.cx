@@ -22,7 +22,14 @@ network ExecutionUnit {
 
 	rf = new RegisterFile();
 	rf.reads(decode.src, compute_ea.half1, compute_ea.half2);
-	rf.reads(decode.dest, alu.result);
+	
+	delay_dest = new task {
+		void loop() {
+			rf.dest.write(decode.dest.read());
+		}
+	};
+	
+	rf.reads(alu.result);
 
 	alu = new ALU();
 	alu.reads(decode.opcode, rf.oper1, rf.oper2);

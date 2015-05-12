@@ -7,47 +7,47 @@ package intel_8088.biu;
 task BusController {
 	import intel_8088.Consts_8086.*;
 
-	in u8 bus_data;
+	in sync u8 bus_data;
 	in u2 eu_segment, sync u16 eu_addr, sync eu_data_in;
 
-	in u20 addr_computed;
 	out sync ready u8 instr;
 	sync {
-		out u20 addr, u8 data_o, u16 eu_data_out;
+		out u8 data_o, u16 eu_data_out;
 	}
-	out u2 segment, u16 offset;
+	out u2 segment, sync u16 offset;
 
 	u16 ip;
+	u2 state;
 
 	void loop() {
 		// as long as nothing from EU comes
-		while (eu_addr.available) {
+		while (!eu_addr.available) {
+			// we should not make the EU wait for more than one cycle
 			if (instr.ready) {
 				segment.write(REG_CS);
-				offset.write(ip);
-				ip++;
-
-				// TODO do this differently, because we should not make the EU wait
-				// for more than one cycle
-				idle(1);
-
-				addr.write(addr_computed.read);
-
 				fence;
-
+				if (!eu_addr.available) {
+					offset.write(ip);
+					ip++;
+				}
+			} else {
+				if (bus_data.available) {
 				// read data in
-				print("read data");
-				instr.write(bus_data.read());
+					print("read data");
+					instr.write(bus_data.read());
+					state = 0;
+				}
 			}
 		}
 
+		state = 0;
 		// EU wants to read or write, it has priority over fetch
 		print("a");
 		if (eu_data_in.available) {
-			// write requested
+		// write requested
 			print("b");
 		} else {
-			// read requested
+		// read requested
 			print("c");
 		}
 	}

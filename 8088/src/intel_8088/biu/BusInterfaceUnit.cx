@@ -19,11 +19,11 @@ network BusInterfaceUnit {
 
 	out sync ready u8 instr;
 	
-	in u8 bus_data_i;
+	in sync u8 bus_data_i;
 
 	ctrl = new BusController();
 	ctrl.reads(bus_data_i, eu_segment, eu_addr, eu_data);
-	ctrl.writes(queue.instr_in, bus_addr, bus_data_o, eu_data_out);
+	ctrl.writes(queue.instr_in, bus_data_o, eu_data_out);
 
 	queue = new InstructionQueue();
 	queue.writes(instr);
@@ -34,8 +34,9 @@ network BusInterfaceUnit {
 	// 8086 family Users Manual, chapter 4 Hardware reference information, 
 	// The BIU combines segment and offset values in its dedicated adder to derive 20-bit addresses
 	compute_real = new task {
+		properties {type: "combinational"}
 		void loop() {
-			ctrl.addr_computed.write((u20) ((rf.dout.read() << 4) + ctrl.offset.read()));
+			bus_addr.write((u20) ((rf.dout.read() << 4) + ctrl.offset.read()));
 		}
 	};
 	
