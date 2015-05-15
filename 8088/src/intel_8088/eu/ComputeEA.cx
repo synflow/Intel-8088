@@ -7,19 +7,15 @@ package intel_8088.eu;
 task ComputeEA {
 	import intel_8088.Consts_8086.*;
 	
-	sync {
-		in u8 instr;
-	}
+	in sync u2 mod, u3 reg, r_m;
 	out sync u2 half1, sync half2, u2 segment, sync u16 addr;
 	in u16 result;
 
 	void loop() {
-		u8 instr_b1 = instr.read();
+		u2 mod = mod.read();
+		u3 reg = reg.read();
+		u3 r_m = r_m.read();
 
-		u2 mod = instr_b1 >> 6;
-		u3 reg = (instr_b1 >> 3) & 7;
-		u3 r_m = instr_b1 & 7;
-		
 		if (mod == 0b11) {
 			// Register Mode
 			// nothing to do for us

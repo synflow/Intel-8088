@@ -7,78 +7,94 @@ package intel_8088.eu;
 task InstrDecode {
 	import intel_8088.Consts_8086.*;
 
-	in sync ready u8 instr, sync u16 bus_data_in;
+	in sync ready u8 instr;
 
+	out sync u8 opcode;
 	sync {
-		out u3 src, u3 dest;
-	}
-	out opcode_t opcode;
-	sync {
-		out u16 bus_addr, bus_data;
 		out u2 qs;
-		out u8 instr_mem;
 	}
+	out sync u2 mod, u3 reg, r_m, bool d, w;
+	out u16 disp, data;
 
-	const u2 /*NORMAL = 0,*/ FIRST_BYTE = 1, NEXT_BYTE = 3, EMPTIED = 2;
+	const u2 /*NORMAL = 0,*/ FIRST_BYTE = 1, NEXT_BYTE = 3 /*, EMPTIED = 2*/;
 
 	void loop() {
 		u8 instr_b0 = instr.read();
 		print("got instruction byte ", instr_b0);
+		opcode.write(instr_b0);
 		qs.write(FIRST_BYTE);
-		if (instr_b0 >> 2 == 0) { // ADD
-			const bool d = instr_b0[1]/*, w = instr_b0[0]*/;
-			u8 instr_b1 = instr.read();
-			qs.write(NEXT_BYTE);
-			u2 mod = instr_b1 >> 6;
-			u3 reg = (instr_b1 >> 3) & 7;
-			u3 r_m = instr_b1 & 7;
 
-			if (mod == 0b11) {
-				src.write(reg);
-				src.write(r_m);
-				dest.write(d ? reg : r_m);
-				opcode.write(OPCODE_ADD);
-			} else {
-				instr_mem.write(instr_b1);
-				fence;
-				bus_data_in.read();
-				opcode.write(OPCODE_ADD);
-				// TODO: write data from bus to ALU
-				if (d) {
-					dest.write(reg);
+		if (instr_b0 >> 3 == 0b01010 || // PUSH register
+			instr_b0 >> 3 == 0b01011 || // POP register
+			instr_b0 >> 3 == 0b10010 || // XCHG register with accumulator
+			instr_b0 >> 3 == 0b1011 || // MOV immediate to register
+			instr_b0 >> 3 == 0b01000 || // INC register
+			instr_b0 >> 3 == 0b01001 // DEC register
+		) {
+			reg.write((u3) instr_b0);
+		} else if ((instr_b0 & ~030) == 0006 || // PUSH segment register
+			(instr_b0 & ~030) == 0007 || // POP segment register
+			(instr_b0 & ~030) == 0046 // SEGMENT override register
+		) {
+			reg.write((u3) instr_b0 >> 3);
+		}
+		
+		bool w = instr_b0[0];
+
+		if (instr_b0 >> 2 == 0b1000_10 || // MOV register/memory to/from register
+			instr_b0 >> 2 == 000 || // ADD reg/memory with register to either
+			instr_b0 >> 2 == 004 || // ADD reg/memory with register to either
+			instr_b0 >> 2 == 012 || // SUB reg/memory with register to either
+			instr_b0 >> 2 == 006 || // SBB reg/memory with register to either
+			instr_b0 >> 2 == 016 || // CMP reg/memory with register to either
+			instr_b0 >> 2 == 010 || // AND reg/memory with register to either
+			instr_b0 >> 2 == 004 || // TEST reg/memory with register to either
+			instr_b0 >> 2 == 002 || // OR reg/memory with register to either
+			instr_b0 >> 2 == 014 // XOR reg/memory with register to either
+		) {
+			d.write(instr_b0[1]);
+		}
+		
+		if (instr_b0 >> 2 == 0b1000_10 || // MOV register/memory to/from register
+			instr_b0 >> 2 == 0 // ADD reg/memory with register to either
+		) {
+			u8 instr_b1 = instr.read();
+			u2 mod = (instr_b1 >> 6) & 3;
+			u3 r_m = instr_b1 & 7;
+			mod.write(mod);
+			reg.write((instr_b1 >> 3) & 7);
+			r_m.write(r_m);
+			
+			qs.write(NEXT_BYTE);
+			
+			if (mod == 0 && r_m == 06) {
+				mod = 0b10;
+			}
+
+			if (mod == 0b01 || mod == 0b10) {
+				u8 disp_lo = instr.read();
+				qs.write(NEXT_BYTE);
+				if (mod == 0b01) {
+					disp.write((i8) disp_lo);
+				} else {
+					u8 disp_hi = instr.read();
+					qs.write(NEXT_BYTE);
+					disp.write(disp_hi << 8 | disp_lo);
 				}
 			}
-		} else if (instr_b0 >> 3 == 0b01010) { // push
-			u3 reg = (instr_b0 >> 3) & 7;
-			//src1.write(REG_SP);
-			// do SP += 2
-			//src1.write(reg);
-			bus_addr.write(50); // value of SP
-			bus_data.write(reg); // value of data to push
-		} else if (instr_b0 >> 2 == 0b100010) { // MOV register/memory to/from register
-			const bool d = instr_b0[1], w = instr_b0[0]; 
-			u8 instr_b1 = instr.read();
-			qs.write(NEXT_BYTE);
-			u2 mod = instr_b1 >> 6;
-			u3 reg = (instr_b1 >> 3) & 7;
-			u3 r_m = instr_b1 & 7;
 
-			if (mod == 0b11) {
-				src.write(d ? r_m : reg);
-				dest.write(d ? reg : r_m);
-				opcode.write(OPCODE_MOV);
+			if (instr_b0 >> 1 == 0b1100011) { // MOV immediate to register/memory
+				u8 data_lo = instr.read();
+				print("data low = ", data_lo);
+				if (w) {
+					u8 data_hi = instr.read();
+					print("data high = ", data_hi);
+					data.write(data_hi << 8 | data_lo);
+				} else {
+					data.write((i8) data_lo);
+				}
 			}
-		} else if (instr_b0 >> 3 == 0b01000) { // INC register
-			u3 reg = (u3) instr_b0;
-			src.write(reg);
-			dest.write(reg);
-			opcode.write(OPCODE_INC);
-		} else {
-			// Jxx instructions
-			idle(70);
-			
-			// when jump has been computed output
-			qs.write(EMPTIED);
 		}
 	}
+
 }

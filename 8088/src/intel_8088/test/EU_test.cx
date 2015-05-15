@@ -11,7 +11,7 @@ network EU_test {
 	
 	stimulus = new task {
 		void setup() {
-			eu.data_in.write(0);
+			eu.mem_data_in.write(0);
 
 			eu.instr.write(0x8B);
 			eu.instr.write(0b11_001_011);

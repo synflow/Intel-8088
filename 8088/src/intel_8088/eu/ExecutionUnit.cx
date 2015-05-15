@@ -9,8 +9,9 @@ network ExecutionUnit {
 	import intel_8088.eu.ComputeEA;
 	import intel_8088.eu.InstrDecode;
 	import intel_8088.eu.RegisterFile;
+	import intel_8088.eu.Execute;
 
-	in sync ready u8 instr, sync u16 data_in;
+	in sync ready u8 instr, sync u16 mem_data_in;
 
 	out u2 segment;
 	sync {
@@ -18,24 +19,28 @@ network ExecutionUnit {
 	}
 
 	decode = new InstrDecode();
-	decode.reads(instr, data_in);
+	decode.reads(instr);
+	
+	execute = new Execute();
+	execute.reads(mem_data_in, decode.opcode, decode.mod, decode.reg, decode.r_m, decode.d);
 
 	rf = new RegisterFile();
-	rf.reads(decode.src, compute_ea.half1, compute_ea.half2);
+	rf.reads(execute.src, compute_ea.half1, compute_ea.half2);
 	
 	delay_dest = new task {
 		void loop() {
-			rf.dest.write(decode.dest.read());
+			rf.dest.write(execute.dest.read());
 		}
 	};
 	
 	rf.reads(alu.result);
 
 	alu = new ALU();
-	alu.reads(decode.opcode, rf.oper1, rf.oper2);
+	alu.reads(rf.oper1, rf.oper2);
 
 	compute_ea = new ComputeEA();
-	compute_ea.reads(decode.instr_mem, alu.result);
+	compute_ea.reads(decode.mod, decode.reg, decode.r_m, alu.result);
 
-	this.reads(compute_ea.segment, compute_ea.addr, decode.bus_data);
+	this.reads(compute_ea.segment, compute_ea.addr, execute.bus_data);
+
 }

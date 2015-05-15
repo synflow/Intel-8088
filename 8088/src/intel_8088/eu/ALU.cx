@@ -11,13 +11,14 @@ task ALU {
 		type: "combinational"
 	}
 
-	in opcode_t opcode, u16 op1, op2;
+	in /*opcode_t opcode,*/ u16 op1, op2;
 	out u16 result;
 
 	void loop() {
-		if (opcode.read() == OPCODE_MOV) {
+		u3 opcode = 0;
+		if (opcode == OPCODE_MOV) {
 			result.write(op1.read());
-		} else if (opcode.read() == OPCODE_INC) {
+		} else if (opcode == OPCODE_INC) {
 			result.write((u16) (op1.read() + 1));
 		}
 	}
