@@ -1,0 +1,26 @@
+/*
+ * MIT Licensed
+ * Copyright (c) 2015-2020 Synflow
+ */
+package intel_8088.eu;
+
+task ALU {
+	import intel_8088.Consts_8086.*;
+
+	properties {
+		type: "combinational"
+	}
+
+	in /*opcode_t opcode,*/ u16 op1, op2;
+	out u16 result;
+
+	void loop() {
+		u3 opcode = 0;
+		if (opcode == OPCODE_MOV) {
+			result.write(op1.read());
+		} else if (opcode == OPCODE_INC) {
+			result.write((u16) (op1.read() + 1));
+		}
+	}
+
+}

@@ -1,0 +1,22 @@
+/*
+ * MIT Licensed
+ * Copyright (c) 2015-2020 Synflow
+ */
+package intel_8088;
+
+network CPU {
+	import intel_8088.eu.ExecutionUnit;
+	import intel_8088.biu.BusInterfaceUnit;
+
+	in sync u8 data_i;
+	out sync u20 addr, sync u8 data_o;
+
+	biu = new BusInterfaceUnit();
+	biu.reads(eu.segment, eu.addr, eu.data_out, data_i);
+
+	eu = new ExecutionUnit();
+	eu.reads(biu.instr, biu.eu_data_out);
+
+	this.reads(biu.bus_addr, biu.bus_data_o);
+
+}

@@ -1,0 +1,29 @@
+/*
+ * MIT Licensed
+ * Copyright (c) 2015-2020 Synflow
+ */
+package intel_8088.test;
+
+network EU_test {
+	import intel_8088.eu.ExecutionUnit;
+
+	eu = new ExecutionUnit();
+
+	stimulus = new task {
+		void setup() {
+			eu.mem_data_in.write(0);
+
+			eu.instr.write(0x8B);
+			eu.instr.write(0b11_001_011);
+			eu.instr.write(0x8B);
+			eu.instr.write(0b11_110_001);
+		}
+	};
+
+	expected = new task {
+		void setup() {
+			idle(10);
+		}
+	};
+
+}

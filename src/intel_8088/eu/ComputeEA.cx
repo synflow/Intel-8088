@@ -1,0 +1,73 @@
+/*
+ * MIT Licensed
+ * Copyright (c) 2015-2020 Synflow
+ */
+package intel_8088.eu;
+
+task ComputeEA {
+	import intel_8088.Consts_8086.*;
+
+	in sync u2 mod, u3 reg, r_m;
+	out sync u2 half1, sync half2, u2 segment, sync u16 addr;
+	in u16 result;
+
+	void loop() {
+		u2 mod = mod.read();
+		u3 reg = reg.read();
+		u3 r_m = r_m.read();
+
+		if (mod == 0b11) {
+			// Register Mode
+			// nothing to do for us
+		} else {
+			if (r_m == 0b000) {
+				half1.write(get_half(REG_BX));
+				half2.write(get_half(REG_SI));
+				idle(1);
+				if (mod == 0b00) {
+					addr.write(result.read());
+				} else if (mod == 0b01) {
+					// add D8
+				} else if (mod == 0b10) {
+					// add D16
+				}
+			} else if (r_m == 0b001) {
+				half1.write(get_half(REG_BX));
+				half1.write(get_half(REG_DI));
+				idle(1);
+				addr.write(result.read());
+			} else if (r_m == 0b010) {
+				half2.write(get_half(REG_BP));
+				half2.write(get_half(REG_SI));
+				idle(1);
+				addr.write(result.read());
+			} else if (r_m == 0b011) {
+				half1.write(get_half(REG_DI));
+				half2.write(get_half(REG_BP));
+				idle(1);
+				addr.write(result.read());
+			} else if (r_m == 0b100) {
+				half2.write(get_half(REG_SI));
+				idle(1);
+				addr.write(result.read());
+			} else if (r_m == 0b101) {
+				half1.write(get_half(REG_DI));
+				idle(1);
+				addr.write(result.read());
+			} else if (r_m == 0b110) {
+				if (mod == 0b00) {
+					// immediate
+					addr.write(result.read());
+				} else if (mod == 0b01) {
+					// add D8
+				} else if (mod == 0b10) {
+					// add D16
+				}
+			} else /* if (r_m == 0b111) */ {
+				half1.write(get_half(REG_BX));
+				idle(1);
+				addr.write(result.read());
+			}
+		}
+	}
+}

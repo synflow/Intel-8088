@@ -1,0 +1,51 @@
+/*
+ * MIT Licensed
+ * Copyright (c) 2015-2020 Synflow
+ */
+package intel_8088.eu;
+
+task Execute {
+
+	in sync u16 mem_data_in;
+	in sync u8 opcode, sync u2 mod, u3 reg, u3 r_m, bool d;
+	out sync u3 src, sync u3 dest, sync u16 bus_data;
+
+	void loop() {
+		if (mod.read == 0b11) {
+			if (d.read()) {
+				src.write(r_m.read());
+				dest.write(reg.read());
+			} else {
+				src.write(reg.read());
+				dest.write(r_m.read());
+			}
+		}
+
+		u8 opcode = opcode.read();
+		u16 oper1 = 0, oper2 = 0;
+		if (opcode >> 2 == 0) { // ADD reg/mem with register to either
+			u16 result = (u16) (oper1 + oper2);
+		} else if (opcode >> 2 == 040) {
+			print("a");
+			fence;
+			if (reg.read() == 00) { // ADD imm to reg/mem
+				u16 result = (u16) (oper1 + oper2);
+			} else if (reg.read() == 01) { // OR imm to reg/mem
+
+			} else if (reg.read() == 02) { // ADC imm to reg/mem
+
+			} else if (reg.read() == 03) { // SBB imm from reg/mem
+
+			} else if (reg.read() == 04) { // AND imm to reg/mem
+
+			} else if (reg.read() == 05) { // SUB imm from reg/mem
+
+			} else if (reg.read() == 06) { // XOR imm to reg/mem
+
+			} else if (reg.read() == 07) { // CMP imm with reg/mem
+
+			}
+		}
+	}
+
+}

@@ -1,0 +1,46 @@
+/*
+ * MIT Licensed
+ * Copyright (c) 2015-2020 Synflow
+ */
+package intel_8088.test;
+
+network CPU_test {
+	import intel_8088.CPU;
+
+	stimulus = new task {
+		void setup() {
+			idle(1000);
+		}
+	};
+
+	cpu = new CPU();
+
+	bus = new task {
+
+		u8 memory[1 << 20];
+
+		void loop() {
+			if (cpu.addr.available) {
+				u20 addr = cpu.addr.read();
+				if (cpu.data_o.available) {
+					print("write address ", addr);
+					memory[addr] = cpu.data_o.read();
+					idle(3);
+				} else {
+					print("read address ", addr);
+					u8 data;
+					if (addr == 0xFFFF0) {
+						data = 0x03;
+					} else if (addr == 0xFFFF1) {
+						data = 0x04;
+					} else {
+						data = memory[addr];
+					}
+					idle(2);
+					cpu.data_i.write(data);
+				}
+			}
+		}
+	};
+
+}

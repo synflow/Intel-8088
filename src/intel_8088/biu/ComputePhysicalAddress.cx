@@ -1,0 +1,16 @@
+/*
+ * MIT Licensed
+ * Copyright (c) 2015-2020 Synflow
+ */
+package intel_8088.biu;
+
+task ComputePhysicalAddress {
+
+	in u16 seg, offset;
+	out u20 addr;
+
+	void loop() {
+		addr.write((u20) ((seg.read << 4) + offset.read));
+	}
+
+}

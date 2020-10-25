@@ -1,0 +1,166 @@
+/*
+ * MIT Licensed
+ * Copyright (c) 2015-2020 Synflow
+ */
+package intel_8088.eu;
+
+// split registers in two Register Files (RFs)
+// based on EA calculation times, we can suppose that:
+//   - BP and SI are in one RF
+//   - BX and DI are in a second RF
+//
+// putting CX/DX in RF1 and AX/BX in RF2 because:
+//   - bit pattern would minimize logic to route to one or the other: given reg, use e ^ g
+//   - allows selection of 8-bit halves in same RF (CL/CH for CX, DL/DH for DX)
+//     again should simplify logic
+
+/*
+ * REG    W=0  W=1
+ * ---    ---  ---
+ * 000    AL   AX
+ * 011    BL   BX
+ * 100    AH   SP
+ * 111    BH   DI
+ */
+
+/*
+ * REG    W=0  W=1
+ * ---    ---  ---
+ * 001    CL   CX
+ * 010    DL   DX
+ * 101    CH   BP
+ * 110    DH   SI
+ */
+network RegisterFile {
+
+	sync {
+		in u3 addr, u2 addr_half1, addr_half2, u3 dest;
+	}
+	in u16 data;
+	out u16 oper1, oper2;
+
+	rf1 = new HalfRF();
+	rf2 = new HalfRF();
+
+	addr2half = new SplitAddress();
+	addr2half.reads(addr);
+
+	dest2half = new SplitAddress();
+	dest2half.reads(dest);
+
+	route_addr = new RouteAddr();
+	route_addr.reads(addr_half1, addr2half.rf1_addr, addr_half2, addr2half.rf2_addr);
+	route_addr.writes(rf1.src, rf2.src);
+
+	// just a task to store the selected RF for one cycle
+	select = new task {
+		out u2 sel;
+		void loop() {
+			sel.write(route_addr.enabled.read());
+		}
+	};
+
+	rf1.reads(dest2half.rf1_addr, data);
+	rf2.reads(dest2half.rf2_addr, data);
+
+	get_operands = new task {
+		properties { type: "combinational" }
+		void loop() {
+			u2 enabled = select.sel.read();
+			if (enabled == 0b11) {
+				// both RFs were selected
+				oper1.write(rf1.result.read());
+				oper2.write(rf2.result.read());
+			} else {
+				u16 result;
+				if (enabled[0]) {
+					result = rf1.result.read();
+				} else {
+					result = rf2.result.read();
+				}
+
+				// result goes to first operand in this cycle
+				// and next cycle it will become the second operand
+				oper1.write(result);
+				oper2.write(oper_delayed.dout.read());
+				oper_delayed.din.write(result);
+			}
+		}
+	};
+
+	oper_delayed = new task {
+		in u16 din;
+		out u16 dout;
+		void loop() {
+			dout.write(din.read());
+		}
+	};
+
+}
+
+task SplitAddress {
+	properties { type: "combinational" }
+
+	sync {
+		in u3 addr;
+		out u2 rf1_addr, rf2_addr;
+	}
+
+	void loop() {
+		u3 addr = addr.read();
+		if (addr[1] ^ addr[0]) {
+			rf2_addr.write(addr >> 1);
+		} else {
+			rf1_addr.write(addr >> 1);
+		}
+	}
+
+}
+
+task RouteAddr {
+	properties { type: "combinational" }
+	sync {
+		in u2 a1, a2, b1, b2;
+	}
+	out u2 half1, half2, enabled;
+	void loop() {
+		u2 enabled = 0b11;
+		if (a1.available()) {
+			half1.write(a1.read());
+		} else if (a2.available) {
+			half1.write(a2.read());
+		} else {
+			enabled[0] = 0;
+		}
+
+		if (b1.available()) {
+			half2.write(b1.read());
+		} else if (b2.available) {
+			half2.write(b2.read());
+		} else {
+			enabled[1] = 0;
+		}
+		enabled.write(enabled);
+	}
+
+}
+
+task HalfRF {
+
+	in u2 src, sync dest, u16 data;
+	out u16 result;
+
+	u16 registers[4];
+
+	void loop() {
+	// update first, so we get the correct values in case of simultaneous read+write
+		if (dest.available) {
+			u16 data = data.read();
+			registers[dest.read()] = data;
+			result.write(data);
+		} else {
+			result.write(registers[src.read()]);
+		}
+	}
+
+}

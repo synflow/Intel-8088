@@ -1,0 +1,47 @@
+/*
+ * MIT Licensed
+ * Copyright (c) 2015-2020 Synflow
+ */
+package intel_8088.biu;
+
+network BusInterfaceUnit {
+	import intel_8088.biu.BusController;
+	import intel_8088.biu.InstructionQueue;
+	import intel_8088.biu.BIU_RF;
+
+	in u2 eu_segment;
+	sync {
+		in u16 eu_addr, eu_data;
+	}
+	out sync u16 eu_data_out;
+
+	out sync u20 bus_addr, sync u8 bus_data_o;
+
+	out sync ready u8 instr;
+
+	in sync u8 bus_data_i;
+
+	ctrl = new BusController();
+	ctrl.reads(bus_data_i, eu_segment, eu_addr, eu_data);
+	ctrl.writes(queue.instr_in, bus_data_o, eu_data_out);
+
+	queue = new InstructionQueue();
+	queue.writes(instr);
+
+	rf = new BIU_RF();
+	rf.reads(ctrl.segment, dummy.dest, dummy.data);
+
+	// 8086 family Users Manual, chapter 4 Hardware reference information,
+	// The BIU combines segment and offset values in its dedicated adder to derive 20-bit addresses
+	compute_real = new task {
+		properties {type: "combinational"}
+		void loop() {
+			bus_addr.write((u20) ((rf.dout.read() << 4) + ctrl.offset.read()));
+		}
+	};
+
+	dummy = new task {
+		out sync u2 dest, u16 data;
+	};
+
+}
